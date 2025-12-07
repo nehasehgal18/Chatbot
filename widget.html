@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chatbot Widget</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+    }
+
+    /* Floating Button */
+    #chatbot-btn {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 50px;
+        height: 50px;
+        background: #2563eb;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        font-size: 32px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+        z-index: 9999;
+        transition: 0.2s ease;
+    }
+
+    #chatbot-btn:hover {
+        transform: scale(1.08);
+    }
+
+    /* Chat Window */
+    #chat-window {
+        position: fixed;
+        bottom: 80px;
+        right: 25px;
+        width: 300px;
+        height: 480px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 9999;
+        animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-header {
+        background: #1f2937;
+        color: white;
+        padding: 15px;
+        font-size: 17px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .chat-body {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background: #f3f4f6;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .message {
+        max-width: 75%;
+        padding: 10px;
+        border-radius: 10px;
+        line-height: 1.4;
+        font-size: 14px;
+    }
+
+    .user {
+        align-self: flex-end;
+        background: #2563eb;
+        color: white;
+    }
+
+    .bot {
+        align-self: flex-start;
+        background: white;
+        border: 1px solid #ddd;
+    }
+
+    /* Footer Input */
+    .chat-footer {
+        padding: 10px;
+        background: white;
+        display: flex;
+        border-top: 1px solid #ddd;
+    }
+
+    .chat-footer input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        font-size: 14px;
+    }
+
+    .chat-footer button {
+        margin-left: 10px;
+        padding: 10px 15px;
+        border: none;
+        background: #2563eb;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .search-result {
+        padding: 6px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .search-result a {
+        font-weight: bold;
+        text-decoration: none;
+        color: #2563eb;
+    }
+</style>
+</head>
+
+<body>
+
+<!-- Floating Chat Button -->
+<div id="chatbot-btn" onclick="toggleChat()">
+    💬
+</div>
+
+<!-- Chatbot Window -->
+<div id="chat-window">
+    <div class="chat-header">
+        🔍 Google Search Assistant
+    </div>
+
+    <div class="chat-body" id="chat-body"></div>
+
+    <div class="chat-footer">
+        <input type="text" id="chat-input" placeholder="Type your query..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+
+<script>
+    function toggleChat() {
+        const chat = document.getElementById("chat-window");
+        chat.style.display = chat.style.display === "flex" ? "none" : "flex";
+    }
+
+    function addMessage(text, sender) {
+        const body = document.getElementById("chat-body");
+        const div = document.createElement("div");
+        div.className = `message ${sender}`;
+        div.innerText = text;
+        body.appendChild(div);
+        body.scrollTop = body.scrollHeight;
+    }
+
+    function showBotResponse(response) {
+        const body = document.getElementById("chat-body");
+        const div = document.createElement("div");
+        div.className = `message bot`;
+
+        if (Array.isArray(response)) {
+            let html = "";
+            response.forEach(r => {
+                html += `
+                <div class="search-result">
+                    <a href="${r.link}" target="_blank">${r.title}</a><br>
+                    <small>${r.snippet}</small>
+                </div>`;
+            });
+            div.innerHTML = html;
+        } else {
+            div.innerText = response;
+        }
+
+        body.appendChild(div);
+        body.scrollTop = body.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById("chat-input");
+        const text = input.value.trim();
+        if (!text) return;
+
+        addMessage(text, "user");
+        input.value = "";
+
+        const response = await fetch("http://127.0.0.1:8000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: text }),
+        });
+
+        const data = await response.json();
+        showBotResponse(data.response);
+    }
+</script>
+
+</body>
+</html>
