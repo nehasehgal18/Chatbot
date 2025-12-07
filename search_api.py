@@ -1,8 +1,12 @@
 import requests
 import os
+from dotenv import load_dotenv
 
-API_KEY = "AIzaSyBvzkmHKBgXa7fijG4ZLdqREbRSh3V59Qc"
-SEARCH_ENGINE_ID = "85d27bd7ae79d4eb1"
+# Load keys from .env file
+load_dotenv()
+
+API_KEY = os.getenv("GOOGLE_API_KEY")
+SEARCH_ENGINE_ID = os.getenv("SEARCH_ENGINE_ID")
 
 def google_search(query):
     url = "https://www.googleapis.com/customsearch/v1"

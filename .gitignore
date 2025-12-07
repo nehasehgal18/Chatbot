@@ -1,0 +1,16 @@
+# Environment Files
+.env
+*.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VS Code settings
+.vscode/
+
+# Model files
+models/
+
+# Ignore keys
+google_api_key.txt
