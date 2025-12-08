@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
 from intent_classifier import predict_intent
 from search_api import google_search
 from utils import open_site
+
+
+class ChatRequest(BaseModel):
+    query: str
 
 
 app = FastAPI()
@@ -18,13 +24,9 @@ app.add_middleware(
 
 
 @app.post("/chat")
-async def chat(data: dict):
-    query = data["query"].lower().strip()
+async def chat(data: ChatRequest):
+    query = data.query.lower().strip()
     intent = predict_intent(query).lower().strip()
-
-    # -----------------------------
-    # INTENT HANDLING
-    # -----------------------------
 
     # Greeting
     if intent == "greeting":
@@ -46,41 +48,28 @@ async def chat(data: dict):
     if intent == "gratitude":
         return {"response": "You're welcome! 😊"}
 
-    # -----------------------------
-    # OPEN WEBSITE (Improved)
-    # -----------------------------
+    # OPEN WEBSITE
     if intent == "open_website":
-        # clean domain extraction
         cleaned = (
             query.replace("open", "")
                  .replace("website", "")
                  .replace("site", "")
                  .strip()
         )
-
-        # If user says: open youtube → youtube.com
         if cleaned:
             return {"response": open_site(cleaned)}
         else:
             return {"response": "Which website should I open?"}
 
-    # -----------------------------
-    # NEWS INTENT (NEW)
-    # -----------------------------
+    # NEWS
     if intent == "news":
         results = google_search("latest news today")
         return {"response": results}
 
-    # -----------------------------
-    # GOOGLE SEARCH INTENT
-    # -----------------------------
+    # SEARCH GOOGLE
     if intent == "search_query":
         results = google_search(query)
         return {"response": results}
 
-    # -----------------------------
-    # DEFAULT FALLBACK
-    # -----------------------------
+    # DEFAULT
     return {"response": "I didn’t understand. Try again!"}
-
-
