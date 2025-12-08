@@ -1,16 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
-import os
 
 from intent_classifier import predict_intent
 from search_api import google_search
 from utils import open_site
 
-# Serve your index.html from the repo root so visiting "/" works
 app = FastAPI()
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 # CORS
 app.add_middleware(
@@ -24,6 +21,10 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     query: str
 
+@app.get("/")
+def home():
+    # serve index.html at root
+    return FileResponse("index.html")
 
 @app.post("/chat")
 async def chat(data: ChatRequest):
