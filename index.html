@@ -188,7 +188,13 @@
             });
             div.innerHTML = html;
         } else {
-            div.innerText = response;
+            if (typeof response === "string" &&
+    (response.startsWith("http://") || response.startsWith("https://"))) {
+    
+    div.innerHTML = `<a href="${response}" target="_blank" style="color:#2563eb;">${response}</a>`;
+} else {
+    div.innerText = response;
+}
         }
 
         body.appendChild(div);
