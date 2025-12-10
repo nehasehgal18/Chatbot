@@ -37,7 +37,7 @@ async def chat(data: ChatRequest):
 
     if intent == "ask_name":
         # Restored "Google Search Chatbot"
-        return {"response": "I am your Google Search Chatbot 🤖"}
+        return {"response": "I am your Google Search Chatbot"}
 
     if intent == "ask_ability":
         # Restored reference to Google
