@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from intent_classifier import predict_intent
-# --- CORRECTED IMPORT ---
+
 from search_scraper import google_search 
 from utils import open_site
 
@@ -44,10 +44,10 @@ async def chat(data: ChatRequest):
         return {"response": "I can search anything on Google. Just type your query!"}
 
     if intent == "goodbye":
-        return {"response": "Goodbye! Take care 😊"}
+        return {"response": "Goodbye! Take care"}
 
     if intent == "gratitude":
-        return {"response": "You're welcome! 😊"}
+        return {"response": "You're welcome!"}
 
     if intent == "open_website":
         cleaned = query.replace("open", "").replace("website", "").replace("site", "").strip()
@@ -56,11 +56,11 @@ async def chat(data: ChatRequest):
         return {"response": "Which website should I open?"}
 
     if intent == "news":
-        # --- CORRECTED FUNCTION CALL ---
+        
         return {"response": google_search("latest news today")}
 
     if intent == "search_query":
-        # --- CORRECTED FUNCTION CALL ---
+        
         return {"response": google_search(query)}
 
     return {"response": "I didn’t understand. Try again!"}
