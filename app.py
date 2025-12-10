@@ -4,7 +4,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from intent_classifier import predict_intent
-from search_api import google_search
+# --- CORRECTED IMPORT ---
+from search_scraper import google_search 
 from utils import open_site
 
 app = FastAPI()
@@ -35,9 +36,11 @@ async def chat(data: ChatRequest):
         return {"response": "Hello! How can I help you?"}
 
     if intent == "ask_name":
+        # Restored "Google Search Chatbot"
         return {"response": "I am your Google Search Chatbot 🤖"}
 
     if intent == "ask_ability":
+        # Restored reference to Google
         return {"response": "I can search anything on Google. Just type your query!"}
 
     if intent == "goodbye":
@@ -53,9 +56,11 @@ async def chat(data: ChatRequest):
         return {"response": "Which website should I open?"}
 
     if intent == "news":
+        # --- CORRECTED FUNCTION CALL ---
         return {"response": google_search("latest news today")}
 
     if intent == "search_query":
+        # --- CORRECTED FUNCTION CALL ---
         return {"response": google_search(query)}
 
     return {"response": "I didn’t understand. Try again!"}

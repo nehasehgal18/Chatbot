@@ -3,7 +3,7 @@ uvicorn
 scikit-learn==1.6.1
 pandas
 numpy
-google-api-python-client
 python-dotenv
 joblib
 requests
+beautifulsoup4
