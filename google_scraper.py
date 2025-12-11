@@ -51,11 +51,14 @@ def google_scrape(query, limit=5):
     else:
         proxies = None 
 
-    time.sleep(random.uniform(1, 3))
+    time.sleep(random.uniform(2, 6))
     
     url = "https://www.google.com/search"
     params = {"q": query, "hl": "en"} 
-    headers = {"User-Agent": random.choice(USER_AGENTS)}
+    headers = {"User-Agent": random.choice(USER_AGENTS),
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.google.com/",
+            }
 
     try:
         response = requests.get(url, params=params, headers=headers, proxies=proxies, timeout=10)
