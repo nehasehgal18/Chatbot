@@ -2,14 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-
-from intent_classifier import predict_intent
 from google_scraper import google_scrape
 from utils import open_site
 
 app = FastAPI()
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -26,35 +23,14 @@ def home():
     return FileResponse("index.html")
 
 @app.post("/chat")
-async def chat(data: ChatRequest):
+def chat(data: ChatRequest):
     query = data.query.lower().strip()
-    intent = predict_intent(query).lower().strip()
 
-    if intent == "greeting":
-        return {"response": "Hello! How can I help you?"}
+    # If user wants to open website
+    if query.startswith("open"):
+        cleaned = query.replace("open", "").strip()
+        return {"response": open_site(cleaned)}
 
-    if intent == "ask_name":
-        return {"response": "I am your Google Search Chatbot"}
-
-    if intent == "ask_ability":
-        return {"response": "I can search anything on Google. Just type your query!"}
-
-    if intent == "goodbye":
-        return {"response": "Goodbye! Take care"}
-
-    if intent == "gratitude":
-        return {"response": "You're welcome!"}
-
-    if intent == "open_website":
-        cleaned = query.replace("open", "").replace("website", "").replace("site", "").strip()
-        if cleaned:
-            return {"response": open_site(cleaned)}
-        return {"response": "Which website should I open?"}
-
-    if intent == "news":
-        return {"response": google_scrape("latest news today")}
-
-    if intent == "search_query":
-        return {"response": google_scrape(query)}
-
-    return {"response": "I didn’t understand. Try again!"}
+    # Otherwise: Always Google search
+    result = google_scrape(query)
+    return {"response": result}

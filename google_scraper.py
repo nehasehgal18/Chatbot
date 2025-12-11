@@ -1,44 +1,58 @@
 import requests
 from bs4 import BeautifulSoup
 
-HEADERS = {
-    "User-Agent": 
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    
-    "Accept-Language": "en-US,en;q=0.9",
-}
-
 def google_scrape(query):
-    url = "https://www.google.com/search"
-    params = {"q": query}
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        )
+    }
 
-    response = requests.get(url, params=params, headers=HEADERS)
-    soup = BeautifulSoup(response.text, "html.parser")
+    url = "https://www.google.com/search?q=" + query.replace(" ", "+")
+
+    response = requests.get(url, headers=headers, timeout=5)
+    soup = BeautifulSoup(response.text, "lxml")
 
     results = []
 
-    for result_block in soup.find_all("div"):
-        link_tag = result_block.find("a")
-        title_tag = result_block.find("h3")
+    for block in soup.find_all("div"):
+        a = block.find("a", href=True)
+        if not a:
+            continue
 
-        if link_tag and title_tag:
-            link = link_tag.get("href")
-            title = title_tag.get_text(strip=True)
+        h3 = a.find("h3")
+        if not h3:
+            continue
 
-            # Snippet: find nearby <div> after <h3>
-            snippet = ""
-            next_div = title_tag.find_next("div")
-            if next_div:
-                snippet = next_div.get_text(" ", strip=True)
+        title = h3.get_text(strip=True)
+        link = a["href"]
 
-            if link.startswith("/url?"):
-                link = "https://www.google.com" + link
+        snippet = ""
+        next_div = block.find("div")
+        if next_div:
+            snippet = next_div.get_text(" ", strip=True)
 
-            results.append({
-                "title": title,
-                "link": link,
-                "snippet": snippet
-            })
+        results.append({
+            "title": title,
+            "link": link,
+            "description": snippet
+        })
 
-    return results[:5]   # return top 5
+    # remove duplicates
+    unique = {}
+    for r in results:
+        if r["link"] not in unique:
+            unique[r["link"]] = r
+
+    results = list(unique.values())
+
+    if len(results) == 0:
+        return [{
+            "title": "No results found",
+            "link": "",
+            "description": ""
+        }]
+
+    return results[:8]
