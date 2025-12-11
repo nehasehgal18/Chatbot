@@ -1,10 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse, parse_qs # New import for link cleaning
+from urllib.parse import urlparse, parse_qs
 import random
-import time # New import for anti-bot delay
+import time
 
-# Add more user agents and use random choice for better stability
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20200101 Firefox/123.0",
@@ -13,72 +12,68 @@ USER_AGENTS = [
 ]
 
 def google_scrape(query, limit=5):
-    # Add a small, random delay to mimic human behavior
     time.sleep(random.uniform(1, 3))
     
     url = "https://www.google.com/search"
-    # Use params for better URL encoding
     params = {"q": query, "hl": "en"} 
     headers = {"User-Agent": random.choice(USER_AGENTS)}
 
     try:
-        response = requests.get(url, params=params, headers=headers)
-        response.raise_for_status() # Raise error for bad status codes
-        soup = BeautifulSoup(response.text, "html.parser") # Use html.parser
+        response = requests.get(url, params=params, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, "html.parser") 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching search results: {e}")
         return []
 
     results = []
-    
-    # 1. Anchor to the Parent Container (most stable ID)
-    parent_container = soup.find('div', id='rso')
-    if not parent_container:
-        # Fallback needed if #rso changes
-        parent_container = soup.find('div', class_='main') or soup 
 
-    # 2. Search for the Structural Pattern (a tag containing an h3)
-    for a in parent_container.find_all("a", href=True):
-        h3 = a.find("h3")
-        if not h3:
-            continue  # Not a search result link
+    search_links = soup.select('a:has(h3)') 
 
-        title = h3.get_text(strip=True)
-        raw_link = a.get("href")
+    for link_tag in search_links:
+        title_tag = link_tag.find('h3')
+        if not title_tag:
+            continue
 
-        # --- CRITICAL CORRECTION: Link Cleaning ---
+        title = title_tag.get_text(strip=True)
+        raw_link = link_tag.get("href")
+
         final_link = None
         if raw_link and raw_link.startswith('/url?q='):
-            # Parse the Google redirect URL to extract the real link
             parsed_url = urlparse(raw_link)
             query_params = parse_qs(parsed_url.query)
             final_link = query_params.get('q', [None])[0]
         elif raw_link and raw_link.startswith('http'):
             final_link = raw_link
-        
-        # Skip if the link is internal to Google or couldn't be cleaned
-        if not final_link or "google.com" in final_link:
+
+        if not final_link or "google.com" in final_link or "webcache" in final_link:
             continue
 
-        # Now find snippet text (using your structural sibling approach)
         snippet = ""
-        parent_div = a.parent
-
-        # Loop through sibling elements inside the same parent div
-        for sib in parent_div.find_all("div", recursive=False):
-            text = sib.get_text(" ", strip=True)
-            # Heuristic: Avoid very short text to find the actual snippet
-            if len(text.split()) > 5:
-                snippet = text
-                break
-
+        parent_div = link_tag.find_parent("div")
+        
+        if parent_div:
+            for sib_div in parent_div.find_all("div", recursive=False):
+                text = sib_div.get_text(" ", strip=True)
+                if len(text.split()) > 8 and text not in title:
+                    snippet = text
+                    break
+    
         results.append({
             "title": title,
             "link": final_link,
-            "snippet": snippet  # CORRECTED KEY NAME for index.html compatibility
+            "snippet": snippet # CORRECTED KEY NAME for index.html compatibility
         })
 
         if len(results) >= limit:
             break
+    
+    unique_results = []
+    seen_links = set()
+    for res in results:
+        if res['link'] not in seen_links:
+            unique_results.append(res)
+            seen_links.add(res['link'])
 
-    return results
+    return unique_results
