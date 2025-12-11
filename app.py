@@ -27,9 +27,10 @@ def chat(data: ChatRequest):
     query = data.query.lower().strip()
 
     # If user wants to open website
-    if query.startswith("open"):
-        cleaned = query.replace("open", "").strip()
-        return {"response": open_site(cleaned)}
+    if query.startswith("open") or query.startswith("go to"):
+        cleaned = query.replace("open", "").replace("go to", "").replace("website", "").replace("site", "").strip()
+        if cleaned:
+            return {"response": open_site(cleaned)}
 
     # Otherwise: Always Google search
     result = google_scrape(query)
