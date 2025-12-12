@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from google_scraper import google_scrape
+from google_scraper import google_search_scrape
 from utils import open_site
 
 app = FastAPI()
@@ -33,5 +33,5 @@ def chat(data: ChatRequest):
             return {"response": open_site(cleaned)}
 
     # Otherwise: Always Google search
-    result = google_scrape(query)
+    result = google_search_scrape(query)
     return {"response": result}
